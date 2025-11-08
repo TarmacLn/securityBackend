@@ -26,9 +26,12 @@
 * Εξυπηρετητής Ιστού: NGINX v.1.29.3
 * Εξυπηρετητής εφαρμογής: Jetty v.11.0.25 (Embedded via Javalin)
 * Εξυπηρετητής βάσης δεδομένων: SQLite 3.49.1.0 (with ActiveJDBC)
-* Πρωτόκολλο ασφάλειας SSL/TLS: NGINX (reverse proxy) handles SSL/TLS
 
-2)Δημιουργία μοντέλου αγαθών (asset model).
+Σημείωση: 
+- Είναι ένα υποθετικό σήστημα στο οποίο προσπαθούμε να μιμιθούμε σημπερφορά του στον πραγματικό κόσμο Το σηστήμα είναι χωρισμένο σε δύο dockers στα οποία γίνετε προσπάθεια μίμισης εποικοινονίας μεταξή backend και frontend servers
+
+
+## 2. Δημιουργία μοντέλου αγαθών (asset model).
 
 | **Όνομα <br> Υπολογιστικού Συστήματος:** | Web Server                                                                                                                                  |                                                          |
 | ---                                      |---                                                                                                                                          |---                                                       |
@@ -42,9 +45,9 @@
 | **Όνομα <br> Υπολογιστικού Συστήματος:** | Backend Server  (aplication part)                                                                                                           |                                                                                                |
 | ---                                      |---                                                                                                                                          |---                                                                                             |
 | **HW**                                   | **Server** <br>(μοντέλο, χαρακτηριστικά) <br> **Τοποθεσία**<br>(κτήριο, δωμάτιο)                                                            | Docker <br>  <br> Greece                                                                       |
-| **SW**                                   | **Λειτουργικό Σύστημα**<br>(πυρήνας, έκδοση)<br><br>**Λογισμικό Εφαρμογών** <br><br><br>**Άλλο Λογισμικό**                              | Debian 12 x86-64<br><br><br>Docker Container 28.5.1<br><br> Eclipse Temurin 21 JRE with (compiles to Java 8 bytecode), Javalin 6.6.0 (web framework), ActiveJDBC 3.5-j11 (ORM)   |
+| **SW**                                   | **Λειτουργικό Σύστημα**<br>(πυρήνας, έκδοση)<br><br>**Λογισμικό Εφαρμογών** <br><br><br>**Άλλο Λογισμικό**                                  | Debian 12 x86-64<br><br><br>Docker Container 28.5.1<br><br> Eclipse Temurin 21 JRE with (compiles to Java 8 bytecode), Javalin 6.6.0 (web framework), ActiveJDBC 3.5-j11 (ORM)   |
 | **Network**                              | **Περιοχή Δικτύου**<br>(network zone) <br>**Σημείο σύνδεσης** <br>(Gateway)                                                                 | localhost <br><br> 7070                                                                        |
-| **Data**                                 | **Δεδομένα διαμόρφωσης**<br>(Configuration data) <br><br>**Δεδομένα λειτουργίας υπηρεσιών**<br> (Operation data) <br><br> **Άλλα δεδομένα** | git Docker-config maven-config <br><br><br> aplicatoin-code(bru sql java json) backend-structure <br><br><br><br> documentations diagrams |
+| **Data**                                 | **Δεδομένα διαμόρφωσης**<br>(Configuration data) <br><br>**Δεδομένα λειτουργίας υπηρεσιών**<br> (Operation data) <br><br> **Άλλα δεδομένα** | version-info git Docker-config maven-config <br><br><br> aplicatoin-code(*.bru *.sql *.java *.json) backend-structure <br><br><br><br> documentations diagrams |
 
 ---
 

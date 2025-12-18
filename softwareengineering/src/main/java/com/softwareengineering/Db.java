@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import org.javalite.activejdbc.Base;
 
 public class Db {
-    private static final String DB_URL = "jdbc:sqlite:" + "database.db";
+    private static final String DB_URL = "jdbc:sqlite:" + "data/database.db";
 
     public static void init() {
         try (Connection connection = DriverManager.getConnection(DB_URL)) {

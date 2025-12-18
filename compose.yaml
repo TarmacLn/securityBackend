@@ -8,8 +8,8 @@ services:
     ports:
       - 7070:7070
     volumes:
-      # Persist SQLite database
-      - ./database.db:/app/database.db
+      # Persist SQLite database directory
+      - db-data:/app/data
     env_file:
       - .env
     healthcheck:
@@ -17,3 +17,6 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+volumes:
+  db-data:

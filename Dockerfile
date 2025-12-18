@@ -45,11 +45,12 @@ WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
 # Copy database and SQL scripts from root directory
-COPY database.db ./
+COPY data/database.db ./
 COPY sql/ ./sql/
 
 # Create data directory for SQLite
 RUN mkdir -p /app/data && \
+    mv /app/database.db /app/data/database.db && \
     chown -R appuser:appuser /app
 
 # Set environment variable for runtime

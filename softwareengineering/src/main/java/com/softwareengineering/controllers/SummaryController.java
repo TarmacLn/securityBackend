@@ -1,12 +1,13 @@
 package com.softwareengineering.controllers;
 
-import io.javalin.Javalin;
-import io.javalin.http.Context;
+import java.util.Map;
 
 import com.softwareengineering.dto.SummaryBody;
 import com.softwareengineering.services.SummaryService;
+import com.softwareengineering.utils.ValidationException;
 
-import java.util.Map;
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 public class SummaryController {
     public static void init(Javalin app) {
@@ -16,15 +17,13 @@ public class SummaryController {
     private static void generateSummary(Context context) {
         try {
             SummaryBody body = context.bodyAsClass(SummaryBody.class);
-
-            if (body.prompt == null || body.prompt.trim().isEmpty()) {
-                context.status(400).json(Map.of("error", "Prompt cannot be null or empty"));
-                return;
-            }
+            body.validate();
 
             Map<String, Object> result = SummaryService.generateSummary(body.prompt);
             context.status(200).json(result);
 
+        } catch (ValidationException e) {
+            context.status(400).json(Map.of("error", "Validation error: " + e.getMessage()));
         } catch (IllegalStateException e) {
             context.status(500).json(Map.of("error", "Configuration error: " + e.getMessage()));
         } catch (Exception e) {

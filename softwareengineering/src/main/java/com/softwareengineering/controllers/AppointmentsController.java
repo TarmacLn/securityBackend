@@ -1,18 +1,19 @@
 package com.softwareengineering.controllers;
 
-import io.javalin.Javalin;
-
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.time.LocalDateTime;
 
 import com.softwareengineering.dto.AppointmentBody;
 import com.softwareengineering.models.enums.UserTypeEnum;
 import com.softwareengineering.services.AppointmentsService;
 import com.softwareengineering.utils.AuthUtils;
 import com.softwareengineering.utils.AuthUtils.UnauthorizedException;
+import com.softwareengineering.utils.InputValidator;
+import com.softwareengineering.utils.ValidationException;
 
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class AppointmentsController {
@@ -92,21 +93,13 @@ public class AppointmentsController {
             int patientID = AuthUtils.validatePatientAndGetId(context);
 
             AppointmentBody body = context.bodyAsClass(AppointmentBody.class);
-            if (body.doctorID == null) {
-                context.status(400).json(Map.of("error", "Doctor ID cannot be null"));
-                return;
-            }
-            if (body.slotID == null) {
-                context.status(400).json(Map.of("error", "slotID cannot be null"));
-                return;
-            }
-            if (body.status == null) {
-                context.status(400).json(Map.of("error", "Status cannot be null"));
-                return;
-            }
+            body.validate(); // Validate input
+            
             AppointmentsService.setAppointment(patientID, body.doctorID, body.slotID, body.status, body.reason);
             context.status(201);
             return;
+        } catch (ValidationException e) {
+            context.status(400).json(Map.of("error", "Validation error: " + e.getMessage()));
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         }
@@ -123,17 +116,27 @@ public class AppointmentsController {
             }
 
             String appointmentIDParam = context.queryParam("appointmentID");
-            if (appointmentIDParam == null) {
-                context.status(400).json(Map.of("error", "Appointment ID cannot be null"));
+            if (appointmentIDParam == null || appointmentIDParam.isEmpty()) {
+                context.status(400).json(Map.of("error", "Appointment ID is required"));
                 return;
             }
-            int appointmentID = Integer.parseInt(appointmentIDParam);
-            Map<String, Object> appointmentDetails = AppointmentsService.getAppointmentDetails(appointmentID);
-            if (appointmentDetails == null) {
-                context.status(404).json(Map.of("error", "Appointment not found"));
-                return;
+            
+            try {
+                int appointmentID = Integer.parseInt(appointmentIDParam);
+                if (!InputValidator.isValidID(appointmentID)) {
+                    context.status(400).json(Map.of("error", "Invalid appointment ID"));
+                    return;
+                }
+                
+                Map<String, Object> appointmentDetails = AppointmentsService.getAppointmentDetails(appointmentID);
+                if (appointmentDetails == null) {
+                    context.status(404).json(Map.of("error", "Appointment not found"));
+                    return;
+                }
+                context.json(appointmentDetails);
+            } catch (NumberFormatException e) {
+                context.status(400).json(Map.of("error", "Invalid appointment ID format"));
             }
-            context.json(appointmentDetails);
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         }
@@ -146,13 +149,12 @@ public class AppointmentsController {
             AuthUtils.validateUserAndGetId(context, userType);
 
             AppointmentBody body = context.bodyAsClass(AppointmentBody.class);
-            if (body.appointmentID == null) {
-                context.status(400).json(Map.of("error", "Appointment ID cannot be null"));
-                return;
-            } else {
-                AppointmentsService.cancelAppointment(body.appointmentID);
-                context.status(200);
-            }
+            body.validateForCancel();
+            
+            AppointmentsService.cancelAppointment(body.appointmentID);
+            context.status(200);
+        } catch (ValidationException e) {
+            context.status(400).json(Map.of("error", "Validation error: " + e.getMessage()));
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         }
@@ -164,13 +166,12 @@ public class AppointmentsController {
             AuthUtils.validateDoctorAndGetId(context);
 
             AppointmentBody body = context.bodyAsClass(AppointmentBody.class);
-            if (body.appointmentID == null) {
-                context.status(400).json(Map.of("error", "Appointment ID cannot be null"));
-                return;
-            } else {
-                AppointmentsService.completeAppointment(body.appointmentID);
-                context.status(200).json(Map.of("message", "Appointment marked as completed"));
-            }
+            body.validateForComplete();
+            
+            AppointmentsService.completeAppointment(body.appointmentID);
+            context.status(200).json(Map.of("message", "Appointment marked as completed"));
+        } catch (ValidationException e) {
+            context.status(400).json(Map.of("error", "Validation error: " + e.getMessage()));
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         }

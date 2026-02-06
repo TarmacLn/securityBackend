@@ -1,15 +1,17 @@
 package com.softwareengineering.controllers;
 
-import io.javalin.Javalin;
-
-import com.softwareengineering.services.AvailabilitiesService;
-import com.softwareengineering.dto.AvailabilityBatchBody;
-import com.softwareengineering.utils.AuthUtils;
-import com.softwareengineering.utils.AuthUtils.UnauthorizedException;
-
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+
+import com.softwareengineering.dto.AvailabilityBatchBody;
+import com.softwareengineering.services.AvailabilitiesService;
+import com.softwareengineering.utils.AuthUtils;
+import com.softwareengineering.utils.AuthUtils.UnauthorizedException;
+import com.softwareengineering.utils.InputValidator;
+import com.softwareengineering.utils.ValidationException;
+
+import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class AvailabilitiesController {
@@ -37,21 +39,23 @@ public class AvailabilitiesController {
 
             // Get doctorID from query parameter
             String doctorIdParam = context.queryParam("doctorID");
-            if (doctorIdParam == null) {
+            if (doctorIdParam == null || doctorIdParam.isEmpty()) {
                 context.status(400).json(Map.of("error", "doctorID parameter is required"));
                 return;
             }
 
-            int doctorId;
             try {
-                doctorId = Integer.parseInt(doctorIdParam);
+                int doctorId = Integer.parseInt(doctorIdParam);
+                if (!InputValidator.isValidID(doctorId)) {
+                    context.status(400).json(Map.of("error", "Invalid doctorID"));
+                    return;
+                }
+
+                List<Map<String, Object>> availabilities = AvailabilitiesService.getDoctorAvailabilities(doctorId, true);
+                context.json(availabilities);
             } catch (NumberFormatException e) {
                 context.status(400).json(Map.of("error", "Invalid doctorID format"));
-                return;
             }
-
-            List<Map<String, Object>> availabilities = AvailabilitiesService.getDoctorAvailabilities(doctorId, true);
-            context.json(availabilities);
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         }
@@ -61,11 +65,8 @@ public class AvailabilitiesController {
         try {
             int doctorId = AuthUtils.validateDoctorAndGetId(context);
             AvailabilityBatchBody body = context.bodyAsClass(AvailabilityBatchBody.class);
-            if (body.slots == null || body.slots.isEmpty()) {
-                context.status(400).json(Map.of("error", "Invalid request body"));
-                return;
-            }
-
+            body.validate();
+            
             // Process each slot and collect any duplicate errors
             java.util.List<String> duplicateSlots = new java.util.ArrayList<>();
             java.util.List<String> successfulSlots = new java.util.ArrayList<>();
@@ -100,6 +101,8 @@ public class AvailabilitiesController {
                     "warning", "Some slots already existed and were skipped"
                 ));
             }
+        } catch (ValidationException e) {
+            context.status(400).json(Map.of("error", "Validation error: " + e.getMessage()));
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         } catch (IllegalArgumentException e) {
@@ -110,13 +113,26 @@ public class AvailabilitiesController {
     private static void deleteAvailability(Context context) {
         try {
             int doctorId = AuthUtils.validateDoctorAndGetId(context);
-            int availabilityId = Integer.parseInt(context.pathParam("availabilityID"));
-            AvailabilitiesService.deleteAvailability(availabilityId, doctorId);
-            context.status(200).json(Map.of("message", "Availability deleted successfully"));
+            String availabilityIdParam = context.pathParam("availabilityID");
+            if (availabilityIdParam == null || availabilityIdParam.isEmpty()) {
+                context.status(400).json(Map.of("error", "Availability ID is required"));
+                return;
+            }
+            
+            try {
+                int availabilityId = Integer.parseInt(availabilityIdParam);
+                if (!InputValidator.isValidID(availabilityId)) {
+                    context.status(400).json(Map.of("error", "Invalid availability ID"));
+                    return;
+                }
+                
+                AvailabilitiesService.deleteAvailability(availabilityId, doctorId);
+                context.status(200).json(Map.of("message", "Availability deleted successfully"));
+            } catch (NumberFormatException e) {
+                context.status(400).json(Map.of("error", "Invalid availability ID format"));
+            }
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
-        } catch (NumberFormatException e) {
-            context.status(400).json(Map.of("error", "Invalid availability ID format"));
         }
     }
 }

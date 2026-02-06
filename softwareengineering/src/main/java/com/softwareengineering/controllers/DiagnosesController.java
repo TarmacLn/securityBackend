@@ -1,15 +1,16 @@
 package com.softwareengineering.controllers;
 
-import io.javalin.Javalin;
-
-import com.softwareengineering.dto.DiagnosisBody;
-import com.softwareengineering.utils.AuthUtils;
-import com.softwareengineering.utils.AuthUtils.UnauthorizedException;
-
 import java.util.List;
 import java.util.Map;
-import io.javalin.http.Context;
+
+import com.softwareengineering.dto.DiagnosisBody;
 import com.softwareengineering.services.DiagnosesService;
+import com.softwareengineering.utils.AuthUtils;
+import com.softwareengineering.utils.AuthUtils.UnauthorizedException;
+import com.softwareengineering.utils.ValidationException;
+
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 public class DiagnosesController {
     public static void init(Javalin app) {
@@ -33,16 +34,12 @@ public class DiagnosesController {
             AuthUtils.validateDoctorAndGetId(context);
 
             DiagnosisBody body = context.bodyAsClass(DiagnosisBody.class);
-            if (body.appointmentID == null) {
-                context.status(400).json(Map.of("error", "Appointment ID cannot be null"));
-                return;
-            }
-            if (body.decease == null) {
-                context.status(400).json(Map.of("error", "Decease cannot be null"));
-                return;
-            }
+            body.validate();
+            
             DiagnosesService.setDiagnosis(body.appointmentID, body.decease, body.details);
             context.status(201);
+        } catch (ValidationException e) {
+            context.status(400).json(Map.of("error", "Validation error: " + e.getMessage()));
         } catch (UnauthorizedException e) {
             AuthUtils.handleUnauthorized(context, e);
         }

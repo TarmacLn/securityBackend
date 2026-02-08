@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # Multi-stage build for optimal image size
-FROM maven:3.9-eclipse-temurin-21 AS builder
+FROM maven AS builder
 
 # Set working directory
 WORKDIR /app
@@ -17,7 +17,7 @@ COPY softwareengineering/src ./src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM eclipse-temurin:21-jre-jammy AS final
+FROM eclipse-temurin AS final
 
 # Accept build argument for API key
 ARG GROQ_API_KEY
